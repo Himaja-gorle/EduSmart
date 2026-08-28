@@ -64,6 +64,7 @@ export {
   FacultyStudentDetailPage,
   FacultySupportPage,
   FacultyInterventionsPage,
+  FacultyGradeSubmissionPage,
   FacultyAnalyticsPage,
   FacultyNotificationsPage,
   AdminDashboardPage,

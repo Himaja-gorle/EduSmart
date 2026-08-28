@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api.js';}
+import api from '../services/api.js';
 
 const demoAccounts = [
   { email: 'student@edusmart.edu', password: 'student123', role: 'student' },
