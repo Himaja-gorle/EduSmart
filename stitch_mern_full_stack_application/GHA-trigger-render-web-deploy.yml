@@ -1,0 +1,51 @@
+name: Trigger Render static site deploy
+
+# This workflow triggers a redeploy of the Render static site (edusmart-web) via the Render API.
+# Save this file to .github/workflows/trigger-render-web-deploy.yml in your repository.
+# Usage:
+# - Set repository secrets: RENDER_API_KEY and RENDER_SERVICE_ID_WEB
+# - Optionally set RENDER_CLEAR_CACHE=true to request a cache clear
+# - Trigger this workflow manually (workflow_dispatch) or programmatically using GitHub repository_dispatch
+#   with event_type: "render-api-deployed". Render API will then start a deploy for the web service.
+
+on:
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [render-api-deployed]
+  push:
+    branches: [ main ]
+
+jobs:
+  trigger-render-deploy:
+    name: Trigger Render web deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required secrets
+        run: |
+          if [ -z "${{ secrets.RENDER_API_KEY }}" ]; then echo "RENDER_API_KEY secret is missing"; exit 1; fi
+          if [ -z "${{ secrets.RENDER_SERVICE_ID_WEB }}" ]; then echo "RENDER_SERVICE_ID_WEB secret is missing"; exit 1; fi
+
+      - name: Trigger deploy via Render API
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID_WEB }}
+          CLEAR_CACHE: ${{ secrets.RENDER_CLEAR_CACHE || 'true' }}
+        run: |
+          echo "Triggering deploy for Render service: $RENDER_SERVICE_ID"
+
+          body=$(jq -n --arg clear "$CLEAR_CACHE" '{clearCache: ($clear == "true")}')
+
+          resp=$(curl -s -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$body")
+
+          echo "Render API response: $resp"
+
+          # Basic check for error
+          if echo "$resp" | grep -q '"errors"'; then
+            echo "Render API returned an error"; exit 1
+          fi
+
+      - name: Finished
+        run: echo "Render deploy triggered. Monitor Render dashboard for build logs." 

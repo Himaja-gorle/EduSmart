@@ -1,0 +1,46 @@
+# Render deployment manifest for EduSmart (API + static frontend)
+# Instructions: Replace <GITHUB_REPO> placeholders when connecting from Render or leave to set in the UI.
+# After adding to your repository, connect the repo to Render (https://dashboard.render.com/new) and select "Deploy from Render.yaml".
+
+services:
+  - type: web
+    name: edusmart-api
+    env: node
+    plan: starter
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: "cd server && npm ci"
+    startCommand: "cd server && npm start"
+    envVars:
+      # Set these securely in the Render dashboard if you don't want to commit secrets here
+      - key: MONGO_URI
+        # Leave value empty here; set in dashboard or replace with your Atlas URI
+        value: ""
+      - key: JWT_SECRET
+        value: ""
+      - key: NODE_ENV
+        value: "production"
+      - key: CLIENT_URL
+        value: "https://edusmart-web.onrender.com"
+
+  - type: static
+    name: edusmart-web
+    env: static
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    buildCommand: "cd client && npm ci && npm run build"
+    staticPublishPath: "client/dist"
+    envVars:
+      - key: VITE_API_URL
+        # Set this to the deployed API root, e.g. https://edusmart-api.onrender.com/api
+        value: ""
+
+# Notes
+# - After connecting your GitHub repo in Render, edit the service environment variables in the Render dashboard
+#   (MONGO_URI and JWT_SECRET must be set for the API to start correctly in production).
+# - If you use MongoDB Atlas, create a cluster, create a DB user, and set MONGO_URI to the connection string.
+# - Render will use buildCommand and startCommand to build and run the services.
+# - The static site will be served from the files produced in client/dist by Vite's build.
