@@ -40,7 +40,16 @@ app.use(apiLimiter);
 app.use(morgan('dev'));
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', app: 'EduSmart API' });
+  res.status(200).json({
+    success: true,
+    message: 'EduSmart API is operational',
+    data: {
+      status: 'ok',
+      app: 'EduSmart API',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+    },
+  });
 });
 
 app.use('/api/auth', authRoutes);
@@ -58,9 +67,19 @@ app.use('/api', screenRoutes);
 app.use('/api', dashboardRoutes);
 app.use('/api', studyPlanRoutes);
 
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Endpoint ${req.method} ${req.originalUrl} not found`,
+  });
+});
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error' });
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+  });
 });
 
 export default app;
