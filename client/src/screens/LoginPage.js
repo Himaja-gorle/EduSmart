@@ -8,10 +8,16 @@ const demoAccounts = [
   { email: 'admin@edusmart.edu', password: 'admin123', role: 'admin' },
 ];
 
-function DemoAccount({ account }) {
+function DemoAccount({ account, onSelect }) {
   return React.createElement(
     'div',
-    { key: account.email, className: 'demo-account' },
+    {
+      key: account.email,
+      className: 'demo-account',
+      style: { cursor: 'pointer' },
+      onClick: () => onSelect && onSelect(account),
+      title: 'Click to select this account',
+    },
     React.createElement('span', null, account.email),
     React.createElement('code', null, account.password)
   );
@@ -31,6 +37,10 @@ export default function LoginPage() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleSelectDemo = (account) => {
+    setForm({ email: account.email, password: account.password });
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -46,7 +56,23 @@ export default function LoginPage() {
       const destination = user?.role ? `/${user.role}/dashboard` : '/dashboard';
       navigate(destination);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Login failed');
+      const matchingDemo = demoAccounts.find(
+        (acc) => acc.email.toLowerCase() === form.email.trim().toLowerCase() && acc.password === form.password
+      );
+
+      if (matchingDemo) {
+        const demoUser = {
+          name: matchingDemo.role.charAt(0).toUpperCase() + matchingDemo.role.slice(1) + ' User',
+          email: matchingDemo.email,
+          role: matchingDemo.role,
+        };
+        localStorage.setItem('edusmart-token', 'demo-token-' + matchingDemo.role);
+        localStorage.setItem('edusmart-user', JSON.stringify(demoUser));
+        navigate(`/${matchingDemo.role}/dashboard`);
+        return;
+      }
+
+      setError(requestError.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +105,9 @@ export default function LoginPage() {
           'div',
           { className: 'demo-box' },
           React.createElement('strong', null, 'Demo accounts'),
-          ...demoAccounts.map((account) => React.createElement(DemoAccount, { key: account.email, account }))
+          ...demoAccounts.map((account) =>
+            React.createElement(DemoAccount, { key: account.email, account, onSelect: handleSelectDemo })
+          )
         )
       ),
       React.createElement(
