@@ -1,4 +1,5 @@
 import LoginPage from './LoginPage.js';
+import RegisterPage from './RegisterPage.js';
 import DashboardPage from './DashboardPage.js';
 import ScreenLibraryPage from './ScreenLibraryPage.js';
 import ScreenPage from './ScreenPage.js';
@@ -40,6 +41,7 @@ import { StudentSubmitAssignmentPage, FacultyGradeSubmissionPage } from './Assig
 
 export {
   LoginPage,
+  RegisterPage,
   DashboardPage,
   ScreenLibraryPage,
   ScreenPage,

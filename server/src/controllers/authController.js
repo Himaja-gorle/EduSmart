@@ -52,28 +52,40 @@ const buildToken = (user) =>
   );
 
 const normalizeUser = (user) => ({
-  id: user.id || user._id.toString(),
+  id: user.id || user._id?.toString(),
   name: user.name,
   email: user.email,
   role: user.role,
-  department: user.department,
+  department: user.department || 'General Studies',
+  semester: user.semester || 1,
+  studentId: user.studentId || '',
+  profileImage: user.profileImage || '',
 });
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role = 'student', department } = req.body;
+    const { name, email, password, role = 'student', department, semester, studentId } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
 
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ success: false, message: 'Role must be one of: student, faculty, admin' });
     }
 
-    const userExists = await User.findOne({ email: email.toLowerCase() });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email address format' });
+    }
+
+    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
     if (userExists) {
-      return res.status(409).json({ success: false, message: 'User already exists' });
+      return res.status(409).json({ success: false, message: 'User with this email already exists' });
     }
 
     const user = await User.create({
@@ -81,11 +93,21 @@ export const registerUser = async (req, res) => {
       email: email.toLowerCase().trim(),
       password,
       role,
-      department: department ? department.trim() : undefined,
+      department: department ? department.trim() : 'General Studies',
+      semester: semester ? Number(semester) : 1,
+      studentId: studentId ? studentId.trim() : undefined,
     });
 
     const token = buildToken(user);
-    return res.status(201).json({ success: true, message: 'User registered successfully', token, user: normalizeUser(user) });
+    const safeUser = normalizeUser(user);
+
+    return res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: safeUser,
+      data: { token, user: safeUser },
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error creating user', error: error.message });
   }
@@ -102,30 +124,37 @@ export const loginUser = async (req, res) => {
     let user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
-      if (process.env.NODE_ENV === 'production') {
-        return res.status(401).json({ success: false, message: 'Invalid credentials' });
-      }
-
       const fallbackUser = demoUsers.find((entry) => entry.email.toLowerCase() === email.toLowerCase().trim());
-      if (!fallbackUser) {
-        return res.status(401).json({ success: false, message: 'Invalid credentials' });
-      }
-
-      if (fallbackUser.password !== password) {
-        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      if (!fallbackUser || fallbackUser.password !== password) {
+        return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
 
       const token = buildToken(fallbackUser);
-      return res.status(200).json({ success: true, message: 'Login successful', token, user: normalizeUser(fallbackUser) });
+      const safeUser = normalizeUser(fallbackUser);
+      return res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        token,
+        user: safeUser,
+        data: { token, user: safeUser },
+      });
     }
 
     const isValid = await user.comparePassword(password);
     if (!isValid) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
     const token = buildToken(user);
-    return res.status(200).json({ success: true, message: 'Login successful', token, user: normalizeUser(user) });
+    const safeUser = normalizeUser(user);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: safeUser,
+      data: { token, user: safeUser },
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Login failed', error: error.message });
   }
@@ -136,12 +165,45 @@ export const getProfile = async (req, res) => {
     const user = await User.findById(req.user.id).lean();
 
     if (!user) {
+      const fallbackUser = demoUsers.find((entry) => entry.id === req.user.id);
+      if (fallbackUser) {
+        const safeUser = normalizeUser(fallbackUser);
+        return res.status(200).json({ success: true, message: 'Profile loaded', user: safeUser, data: safeUser });
+      }
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     const safeUser = normalizeUser(user);
-    return res.status(200).json({ success: true, message: 'Profile loaded', user: safeUser });
+    return res.status(200).json({ success: true, message: 'Profile loaded', user: safeUser, data: safeUser });
   } catch (error) {
-    return res.status(200).json({ success: true, user: { ...req.user } });
+    return res.status(200).json({ success: true, user: { ...req.user }, data: { ...req.user } });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, department, semester, profileImage } = req.body;
+    const updateData = {};
+
+    if (name) updateData.name = name.trim();
+    if (department) updateData.department = department.trim();
+    if (semester) updateData.semester = Number(semester);
+    if (profileImage !== undefined) updateData.profileImage = profileImage;
+
+    const user = await User.findByIdAndUpdate(req.user.id, { $set: updateData }, { new: true, runValidators: true }).lean();
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const safeUser = normalizeUser(user);
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: safeUser,
+      data: safeUser,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error updating profile', error: error.message });
   }
 };

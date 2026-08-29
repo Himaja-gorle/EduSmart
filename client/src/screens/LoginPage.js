@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api.js';
 
 const demoAccounts = [
@@ -143,6 +143,12 @@ export default function LoginPage() {
           'button',
           { type: 'submit', disabled: isSubmitting },
           isSubmitting ? 'Signing in...' : 'Sign in'
+        ),
+        React.createElement(
+          'p',
+          { style: { textAlign: 'center', marginTop: 16, fontSize: '0.9rem' } },
+          "Don't have an account? ",
+          React.createElement(Link, { to: '/register', style: { color: '#2563eb', fontWeight: 600 } }, 'Create Account')
         )
       )
     )

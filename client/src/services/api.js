@@ -1,19 +1,39 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('edusmart-token');
-
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
   if (token) {
-    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
-});
+}, (error) => Promise.reject(error));
 
-export default api;
+export const checkHealth = async () => {
+  const response = await API.get('/health');
+  return response.data;
+};
+
+export const loginUserApi = async (credentials) => {
+  const response = await API.post('/auth/login', credentials);
+  return response.data;
+};
+
+export const registerUserApi = async (userData) => {
+  const response = await API.post('/auth/register', userData);
+  return response.data;
+};
+
+export const fetchMeApi = async () => {
+  const response = await API.get('/auth/me');
+  return response.data;
+};
+
+export default API;
 

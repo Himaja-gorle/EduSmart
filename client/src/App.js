@@ -1,97 +1,37 @@
-﻿import React from 'react';
+import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import {
-  AdminAnalyticsPage,
-  AdminCoursesPage,
-  AdminDashboardPage,
-  AdminDepartmentsPage,
-  AdminFacultyPage,
-  AdminInterventionsPage,
-  AdminSemestersPage,
-  AdminSettingsPage,
-  AdminStudentsPage,
-  AdminSupportPage,
-  DashboardPage,
-  FacultyAnalyticsPage,
-  FacultyAssignmentsPage,
-  FacultyAttendancePage,
-  FacultyCoursesPage,
-  FacultyDashboardPage,
-  FacultyInterventionsPage,
-  FacultyNotificationsPage,
-  FacultyProfilePage,
-  FacultyQuizzesPage,
-  FacultyStudentDetailPage,
-  FacultyStudentsPage,
-  FacultySupportPage,
-  LoginPage,
-  ScreenLibraryPage,
-  ScreenPage,
-  StudentAssignmentsPage,
-  StudentAttendancePage,
-  StudentCoursesPage,
-  StudentDashboardPage,
-  StudentNotificationsPage,
-  StudentPerformancePage,
-  StudentProfilePage,
-  StudentQuizzesPage,
-  StudentRecommendationsPage,
-  StudentStudyPlannerPage,
-  StudentSubmitAssignmentPage,
-  FacultyGradeSubmissionPage,
-} from './screens/index.js';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import StudentDashboard from './pages/student/StudentDashboard';
+import FacultyDashboard from './pages/faculty/FacultyDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
   return React.createElement(
-    Routes,
+    AuthProvider,
     null,
-    React.createElement(Route, { path: '/', element: React.createElement(Navigate, { to: '/login', replace: true }) }),
-    React.createElement(Route, { path: '/login', element: React.createElement(LoginPage) }),
-    React.createElement(Route, { path: '/dashboard', element: React.createElement(DashboardPage) }),
-
-    React.createElement(Route, { path: '/student', element: React.createElement(Navigate, { to: '/student/dashboard', replace: true }) }),
-    React.createElement(Route, { path: '/student/dashboard', element: React.createElement(StudentDashboardPage) }),
-    React.createElement(Route, { path: '/student/profile', element: React.createElement(StudentProfilePage) }),
-    React.createElement(Route, { path: '/student/courses', element: React.createElement(StudentCoursesPage) }),
-    React.createElement(Route, { path: '/student/assignments', element: React.createElement(StudentAssignmentsPage) }),
-    React.createElement(Route, { path: '/student/assignments/:assignmentId/submit', element: React.createElement(StudentSubmitAssignmentPage) }),
-    React.createElement(Route, { path: '/student/quizzes', element: React.createElement(StudentQuizzesPage) }),
-    React.createElement(Route, { path: '/student/attendance', element: React.createElement(StudentAttendancePage) }),
-    React.createElement(Route, { path: '/student/performance', element: React.createElement(StudentPerformancePage) }),
-    React.createElement(Route, { path: '/student/recommendations', element: React.createElement(StudentRecommendationsPage) }),
-    React.createElement(Route, { path: '/student/study-planner', element: React.createElement(StudentStudyPlannerPage) }),
-    React.createElement(Route, { path: '/student/notifications', element: React.createElement(StudentNotificationsPage) }),
-
-    React.createElement(Route, { path: '/faculty', element: React.createElement(Navigate, { to: '/faculty/dashboard', replace: true }) }),
-    React.createElement(Route, { path: '/faculty/dashboard', element: React.createElement(FacultyDashboardPage) }),
-    React.createElement(Route, { path: '/faculty/profile', element: React.createElement(FacultyProfilePage) }),
-    React.createElement(Route, { path: '/faculty/courses', element: React.createElement(FacultyCoursesPage) }),
-    React.createElement(Route, { path: '/faculty/assignments', element: React.createElement(FacultyAssignmentsPage) }),
-    React.createElement(Route, { path: '/faculty/submissions/:submissionId/grade', element: React.createElement(FacultyGradeSubmissionPage) }),
-    React.createElement(Route, { path: '/faculty/quizzes', element: React.createElement(FacultyQuizzesPage) }),
-    React.createElement(Route, { path: '/faculty/attendance', element: React.createElement(FacultyAttendancePage) }),
-    React.createElement(Route, { path: '/faculty/students', element: React.createElement(FacultyStudentsPage) }),
-    React.createElement(Route, { path: '/faculty/students/:id', element: React.createElement(FacultyStudentDetailPage) }),
-    React.createElement(Route, { path: '/faculty/support', element: React.createElement(FacultySupportPage) }),
-    React.createElement(Route, { path: '/faculty/interventions', element: React.createElement(FacultyInterventionsPage) }),
-    React.createElement(Route, { path: '/faculty/analytics', element: React.createElement(FacultyAnalyticsPage) }),
-    React.createElement(Route, { path: '/faculty/notifications', element: React.createElement(FacultyNotificationsPage) }),
-
-    React.createElement(Route, { path: '/admin', element: React.createElement(Navigate, { to: '/admin/dashboard', replace: true }) }),
-    React.createElement(Route, { path: '/admin/dashboard', element: React.createElement(AdminDashboardPage) }),
-    React.createElement(Route, { path: '/admin/students', element: React.createElement(AdminStudentsPage) }),
-    React.createElement(Route, { path: '/admin/faculty', element: React.createElement(AdminFacultyPage) }),
-    React.createElement(Route, { path: '/admin/departments', element: React.createElement(AdminDepartmentsPage) }),
-    React.createElement(Route, { path: '/admin/courses', element: React.createElement(AdminCoursesPage) }),
-    React.createElement(Route, { path: '/admin/semesters', element: React.createElement(AdminSemestersPage) }),
-    React.createElement(Route, { path: '/admin/analytics', element: React.createElement(AdminAnalyticsPage) }),
-    React.createElement(Route, { path: '/admin/support', element: React.createElement(AdminSupportPage) }),
-    React.createElement(Route, { path: '/admin/interventions', element: React.createElement(AdminInterventionsPage) }),
-    React.createElement(Route, { path: '/admin/settings', element: React.createElement(AdminSettingsPage) }),
-
-    React.createElement(Route, { path: '/screens', element: React.createElement(ScreenLibraryPage) }),
-    React.createElement(Route, { path: '/screens/:slug', element: React.createElement(ScreenPage) }),
-    React.createElement(Route, { path: '*', element: React.createElement(Navigate, { to: '/login', replace: true }) })
+    React.createElement(
+      Routes,
+      null,
+      React.createElement(Route, { path: '/login', element: React.createElement(Login) }),
+      React.createElement(Route, { path: '/register', element: React.createElement(Register) }),
+      React.createElement(Route, {
+        element: React.createElement(ProtectedRoute, { allowedRoles: ['student'] }),
+        children: React.createElement(Route, { path: '/student/dashboard', element: React.createElement(StudentDashboard) })
+      }),
+      React.createElement(Route, {
+        element: React.createElement(ProtectedRoute, { allowedRoles: ['faculty'] }),
+        children: React.createElement(Route, { path: '/faculty/dashboard', element: React.createElement(FacultyDashboard) })
+      }),
+      React.createElement(Route, {
+        element: React.createElement(ProtectedRoute, { allowedRoles: ['admin'] }),
+        children: React.createElement(Route, { path: '/admin/dashboard', element: React.createElement(AdminDashboard) })
+      }),
+      React.createElement(Route, { path: '/', element: React.createElement(Navigate, { to: '/login', replace: true }) }),
+      React.createElement(Route, { path: '*', element: React.createElement(Navigate, { to: '/login', replace: true }) })
+    )
   );
 }
 
